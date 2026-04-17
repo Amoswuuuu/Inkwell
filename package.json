@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "description": "A refined Astro blog theme with ink-inspired aesthetics",
-  "author": "Author Name <hello@example.com>",
+  "author": "Amoswu <hi@amoswu.top>",
   "license": "MIT",
   "keywords": [
     "blog",
@@ -16,12 +16,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-github-user/your-repo-name"
+    "url": "https://github.com/Amoswuuuu/Inkwell"
   },
   "bugs": {
-    "url": "https://github.com/your-github-user/your-repo-name/issues"
+    "url": "https://github.com/Amoswuuuu/Inkwell/issues"
   },
-  "homepage": "https://github.com/your-github-user/your-repo-name#readme",
+  "homepage": "https://github.com/Amoswuuuu/Inkwell#readme",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -50,7 +50,6 @@
     "@astrojs/sitemap": "^3.7.2",
     "astro": "^6.1.1",
     "dotenv": "^16.6.1",
-    "inkwell": "file:../inkwell",
     "js-yaml": "^4.1.1",
     "pagefind": "^1.4.0",
     "reading-time": "^1.5.0",

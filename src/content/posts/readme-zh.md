@@ -123,7 +123,7 @@ inkwell export      CLI 导出为 JSON 或 CSV
 ## 🚀 快速开始
 
 ```bash
-git clone https://github.com/your-github-user/your-repo-name.git
+git clone https://github.com/Amoswuuuu/Inkwell.git
 cd inkwell
 npm install
 npm run dev
@@ -493,7 +493,7 @@ npm run build
 
 ## 🤝 贡献
 
-欢迎提交 Bug 修复和 Pull Request。请到 [Issues](https://github.com/your-github-user/your-repo-name/issues) 页面提交问题或功能请求。
+欢迎提交 Bug 修复和 Pull Request。请到 [Issues](https://github.com/Amoswuuuu/Inkwell/issues) 页面提交问题或功能请求。
 
 ---
 

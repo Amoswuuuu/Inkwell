@@ -123,7 +123,7 @@ Behind the structured data layer is a carefully crafted reading environment:
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/your-github-user/your-repo-name.git
+git clone https://github.com/Amoswuuuu/Inkwell.git
 cd inkwell
 npm install
 npm run dev
@@ -493,7 +493,7 @@ npm run build
 
 ## 🤝 Contributing
 
-Bug reports and pull requests are welcome. Please open an [Issue](https://github.com/your-github-user/your-repo-name/issues) for bugs or feature requests.
+Bug reports and pull requests are welcome. Please open an [Issue](https://github.com/Amoswuuuu/Inkwell/issues) for bugs or feature requests.
 
 ---
 

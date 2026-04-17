@@ -12,12 +12,12 @@ version: 1.0.0
 
 # CDN 加速域名（修改为你在 cnb.cool 创建的域名）
 domains:
-  - your-project.cnb.cool
+  - inkwell.cnb.cool
 
-# 回源配置（修改为你自己的 GitHub 仓库和分支）
+# 回源配置
 origin:
   type: github
-  repo: your-github-user/your-repo-name
+  repo: Amoswuuuu/Inkwell
   branch: gh-pages
   path: /
 
