@@ -1,8 +1,11 @@
 # ✒️ Inkwell
 
+[**中文文档**](./README.zh-CN.md) | English
+
 **Readable by humans. Resolvable by machines.**
 
 Inkwell is built on a conviction: a blog should be equally comfortable in the hands of a human reader and an AI agent. Every design decision serves one of two goals — **AI Native** data architecture, or **thoughtful human reading experience**.
+
 
 <p align="center">
   <img src="docs/screenshots/home_light.png" width="49%" alt="Inkwell Light Homepage" />

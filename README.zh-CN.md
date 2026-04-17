@@ -1,8 +1,11 @@
 # ✒️ Inkwell
 
+[English](./README.md) | **中文文档**
+
 **人可读，机可解。**
 
 Inkwell 基于一个设计信念：博客应同时对人类读者和 AI Agent 友好。每一个设计决策服务于两个目标之一——**AI Native** 数据架构，或**优雅的阅读体验**。
+
 
 <p align="center">
   <img src="docs/screenshots/home_light.png" width="49%" alt="Inkwell 浅色主页" />
