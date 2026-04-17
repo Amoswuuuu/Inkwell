@@ -32,9 +32,6 @@ jobs:
 
       - name: Build (Astro + Pagefind)
         run: npm run build
-        env:
-          # If posts are stored outside the repo (e.g. Obsidian vault), override here
-          # INKWELL_POSTS_DIR: ./src/content/posts
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
