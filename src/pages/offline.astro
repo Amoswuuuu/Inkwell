@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+---
+
+<BaseLayout title={`离线 - ${SITE.title}`} noIndex={true}>
+  <div class="offline-container">
+    <div class="offline-card">
+      <div class="offline-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+      <h1 class="offline-title">你已离线</h1>
+      <p class="offline-text">网络连接似乎中断了。请检查你的网络设置，或稍后再试。</p>
+      <a href="/" class="offline-btn">重新连接</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .offline-container {
+    min-height: calc(100vh - var(--nav-height) - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .offline-card {
+    text-align: center;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 32px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .offline-icon {
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .offline-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  .offline-text {
+    font-size: 15px;
+    color: var(--text-meta);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .offline-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .offline-btn:hover {
+    background: var(--accent);
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+</style>

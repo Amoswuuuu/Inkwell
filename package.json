@@ -1,0 +1,68 @@
+{
+  "name": "inkwell",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "A refined Astro blog theme with ink-inspired aesthetics",
+  "author": "Author Name <hello@example.com>",
+  "license": "MIT",
+  "keywords": [
+    "blog",
+    "astro",
+    "theme",
+    "static-site",
+    "markdown",
+    "minimalist",
+    "zh-CN"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-github-user/your-repo-name"
+  },
+  "bugs": {
+    "url": "https://github.com/your-github-user/your-repo-name/issues"
+  },
+  "homepage": "https://github.com/your-github-user/your-repo-name#readme",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": {
+    "inkwell": "./scripts/inkwell.mjs"
+  },
+  "scripts": {
+    "inkwell": "node scripts/inkwell.mjs",
+    "generate": "node scripts/inkwell.mjs generate",
+    "server": "node scripts/inkwell.mjs server",
+    "preview": "node scripts/inkwell.mjs preview",
+    "clean": "node scripts/inkwell.mjs clean",
+    "deploy": "node scripts/inkwell.mjs deploy",
+    "dev": "astro dev",
+    "build": "node scripts/inkwell.mjs generate",
+    "build:astro": "astro build",
+    "ai": "node scripts/ai-preprocess.mjs",
+    "ai:preprocess": "node scripts/ai-preprocess.mjs",
+    "lint:md": "node scripts/lint-md.mjs",
+    "publish:obsidian": "node scripts/obsidian-publish.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.1.1",
+    "dotenv": "^16.6.1",
+    "inkwell": "file:../inkwell",
+    "js-yaml": "^4.1.1",
+    "pagefind": "^1.4.0",
+    "reading-time": "^1.5.0",
+    "rehype-pretty-code": "^0.14.3",
+    "shiki": "^4.0.2",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "vite": "^7"
+  },
+  "devDependencies": {
+    "hastscript": "^9.0.1",
+    "unist-util-visit": "^5.1.0"
+  }
+}

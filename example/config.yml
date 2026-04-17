@@ -1,0 +1,131 @@
+# ===========================================
+# Inkwell 主题配置示例
+# ===========================================
+# Fork Inkwell 后，复制此文件到项目根目录，重命名为 config.yml
+# 然后修改为你自己的站点信息
+# ===========================================
+
+site:
+  title: "My Inkwell Blog"
+  subtitle: '记录生活，分享思考'
+  description: 一个使用 Inkwell 主题的博客
+  url: https://yourusername.github.io/Inkwell
+  startDate: '2024-01-01'
+  timezone: Asia/Shanghai
+  heroImage: https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist/2020/006.jpg
+  postsPerPage: 10
+  travellings: ''
+
+author:
+  name: Your Name
+  bio: |
+    博主简介
+    热爱技术，喜欢折腾
+  avatar: https://your-avatar-url.com/avatar.jpg
+  language: zh-CN
+
+avatar:
+  shape: circle
+  size: 80
+  border: ring
+
+background:
+  image: ''
+  blur: 0
+  overlay: 0.3
+  overlayColor: '#000'
+
+stats:
+  umami:
+    enabled: false
+    src: ''
+    websiteId: ''
+
+social:
+  github: your-github-username
+  twitter: ""
+  email: your@email.com
+
+giscus:
+  repo: your-github-username/your-repo
+  repoId: your-repo-id
+  category: Announcements
+  categoryId: your-category-id
+  lang: zh-CN
+
+siteInfo:
+  statStyle: block
+  showRuntime: true
+  showPostCount: true
+  showTagCount: true
+  showWordCount: true
+  showStartDate: true
+  showLastUpdated: true
+
+footer:
+  showPoweredBy: true
+  showTheme: true
+  showHosted: false
+  hostedLabel: GitHub Pages
+  hostedUrl: https://pages.github.com
+  links:
+    - label: RSS
+      href: /rss.xml
+    - label: Sitemap
+      href: /sitemap-index.xml
+
+navLinks:
+  - href: /
+    label: 首页
+  - href: /archives
+    label: 归档
+  - href: /categories
+    label: 分类
+  - href: /friends
+    label: 友链
+  - href: /about
+    label: 关于
+
+dateFormat: YYYY-MM-DD
+timeFormat: HH:mm:ss
+
+content:
+  postsDir: src/content/posts
+
+post:
+  listStyle: card
+  math: true
+  codeHighlight: true
+  lineNumber: true
+
+license:
+  default: CC-BY-SA
+  presets:
+    CC-BY-SA:
+      name: CC BY-SA 4.0
+      url: https://creativecommons.org/licenses/by-sa/4.0/
+      notice: 转载须署名并以相同协议共享。
+
+# ===========================================
+# AI 摘要配置（可选）
+# ===========================================
+# ai:
+#   enabled: true
+#   provider: anthropic
+#   providers:
+#     openai:
+#       apiKey: ${OPENAI_API_KEY}
+#       model: gpt-4o-mini
+#       endpoint: https://api.openai.com/v1
+#       displayName: AI Abstract
+
+# ===========================================
+# Webhook 配置（可选）
+# ===========================================
+# webhook:
+#   enabled: false
+#   urls:
+#     - url: https://your-agent.com/webhook
+#       method: POST
+#       events:
+#         - deploy

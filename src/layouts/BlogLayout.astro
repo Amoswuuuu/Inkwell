@@ -1,0 +1,1014 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import AISummaryCard from '../components/AISummaryCard.astro';
+import GiscusComments from '../components/GiscusComments.astro';
+import { SITE, resolveLicense } from '../config';
+import { normalizeCats } from '../utils/posts';
+import { displayTag } from '../utils/tag';
+
+interface Props {
+  title: string;
+  slug: string;
+  date: Date;
+  updated?: Date;
+  cover?: string;
+  categories?: string | string[];
+  tags?: string | string[];
+  description?: string;
+  ai_summary?: string[];
+  aiModel?: string;
+  license?: string | { name: string; url: string; notice?: string };
+  relatedPosts?: { slug: string; title: string; date: Date; cover?: string; categories?: string | string[] }[];
+  readingTime?: number;
+  prevPost?: { slug: string; title: string };
+  nextPost?: { slug: string; title: string };
+  math?: boolean;
+}
+
+const {
+  title,
+  slug,
+  date,
+  updated,
+  cover,
+  categories,
+  tags,
+  description,
+  ai_summary = [],
+  aiModel = SITE.aiAbstract.label,  // 使用 displayName，没有则用 model
+  license,
+  relatedPosts = [],
+  readingTime = 5,
+  prevPost,
+  nextPost,
+  math = false,
+} = Astro.props;
+
+const cats = normalizeCats(categories);
+const rawTags = Array.isArray(tags) ? tags : (tags ? [tags] : []);
+// Support comma-separated tag strings (e.g. "2021,原创,Qt")
+const tagList = rawTags.flatMap(t => typeof t === 'string' && t.includes(',') ? t.split(',').map(s => s.trim()).filter(Boolean) : [t]);
+
+const siteLicense = { ...SITE.license, notice: SITE.license.notice ?? '转载请注明出处。' };
+const articleLicense = typeof license === 'string'
+  ? resolveLicense(license, siteLicense)
+  : (license ?? siteLicense);
+const licenseNotice = articleLicense.notice ?? '转载请注明出处。';
+
+const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+const updatedStr = updated
+  ? updated.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-')
+  : null;
+
+const { pathname } = Astro.url;
+const siteUrl = (SITE.url || '').replace(/\/$/, '');
+const postUrl = `${siteUrl}/posts/${slug}/`;
+
+// JSON-LD Schema for AI and SEO
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description: description || ai_summary?.join(' ') || '',
+  image: cover || SITE.heroImage,
+  datePublished: date.toISOString(),
+  dateModified: (updated ?? date).toISOString(),
+  author: {
+    '@type': 'Person',
+    name: SITE.author.name,
+    url: siteUrl,
+    image: SITE.author.avatar,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: SITE.title,
+    url: siteUrl,
+    logo: { '@type': 'ImageObject', url: `${siteUrl}/logo.svg` },
+  },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+  keywords: tagList.join(', '),
+  articleSection: cats[0] ?? undefined,
+  timeRequired: `PT${readingTime}M`,
+  ...(ai_summary?.length > 0 && { abstract: ai_summary.join(' | ') }),
+  license: articleLicense.url,
+  url: postUrl,
+};
+---
+
+<BaseLayout title={title} description={description} ogImage={cover} math={math}>
+  <!-- JSON-LD Structured Data for AI/SEO -->
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <!-- OpenGraph article meta -->
+  <meta slot="head" property="article:published_time" content={date.toISOString()} />
+  <meta slot="head" property="article:modified_time" content={(updated ?? date).toISOString()} />
+  <meta slot="head" property="article:author" content={SITE.author.name} />
+  {cats.map(cat => <meta slot="head" property="article:section" content={cat} />)}
+  {tagList.map(tag => <meta slot="head" property="article:tag" content={tag} />)}
+
+  <!-- Reading progress bar -->
+  <div id="reading-progress" aria-hidden="true"></div>
+
+  <!-- Hero -->
+  <section class="hero post-hero">
+    {cover
+      ? <img class="hero-img" src={cover} alt={title} loading="eager" decoding="sync" fetchpriority="high" />
+      : <div class="hero-img-placeholder"></div>
+    }
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="/">首页</a>
+        {cats[0] && <><span>›</span><a href={`/categories/${encodeURIComponent(cats[0])}`}>{cats[0]}</a></>}
+        <span>›</span>
+        <span class="breadcrumb-current">{title.length > 20 ? title.slice(0, 20) + '…' : title}</span>
+      </nav>
+      <h1 class="hero-title">{title}</h1>
+      <div class="hero-meta">
+        {cats.slice(0, 2).map(cat => (
+          <a class="badge" href={`/categories/${encodeURIComponent(cat)}`}>{cat}</a>
+        ))}
+        <span class="meta-item">📅 {dateStr}</span>
+        <span class="meta-item">⏱ 约 {readingTime} 分钟</span>
+        <button class="reading-mode-btn" id="reading-mode-toggle" title="阅读模式">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+          <span>阅读模式</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content area -->
+  <div class="post-wrap">
+    <div class="post-main">
+
+      <!-- AI Summary -->
+      {SITE.aiAbstract.enabled && ai_summary.length > 0 && <AISummaryCard points={ai_summary} model={aiModel} />}
+
+      <!-- Article body -->
+      <article class="article-card">
+        <div class="prose">
+          <slot />
+        </div>
+
+        <!-- Article footer -->
+        <footer class="article-footer">
+          <!-- Timestamps -->
+          <div class="timestamps">
+            <span class="ts-item">📅 发布于 <strong>{dateStr}</strong></span>
+            {updatedStr && <span class="ts-item">✏️ 更新于 <strong>{updatedStr}</strong></span>}
+          </div>
+
+          <!-- Tags -->
+          {tagList.length > 0 && (
+            <div class="tag-row">
+              <span class="tag-label">标签：</span>
+              {tagList.map(tag => (
+                <a class="article-tag" href={`/tags/${encodeURIComponent(tag)}`}>#{displayTag(tag)}</a>
+              ))}
+            </div>
+          )}
+
+          <!-- Share -->
+          <div class="share-row">
+            <span class="share-label">分享：</span>
+            <a
+              class="share-btn"
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(Astro.site + pathname.slice(1))}`}
+              target="_blank" rel="noopener"
+            >𝕏 Twitter</a>
+            <button class="share-btn" id="copy-link">🔗 复制链接</button>
+          </div>
+
+          <!-- License -->
+          <div class="license">
+            本文采用
+            <a href={articleLicense.url} target="_blank" rel="noopener noreferrer">
+              {articleLicense.name}
+            </a>
+            协议，{licenseNotice}
+          </div>
+        </footer>
+      </article>
+
+      <!-- Related Posts -->
+      {relatedPosts.length > 0 && (
+        <section class="related-section">
+          <div class="section-header">
+            <div class="section-header-line"></div>
+            <span class="section-header-text">相关文章</span>
+          </div>
+          <div class="related-grid">
+            {relatedPosts.slice(0, 3).map(p => {
+              const pCats = normalizeCats(p.categories);
+              const pDate = p.date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+              return (
+                <a class="related-card" href={`/posts/${p.slug}/`}>
+                  <div class="related-img-wrap">
+                    {p.cover
+                      ? <img class="related-img" src={p.cover} alt={p.title} loading="lazy" decoding="async" fetchpriority="low" />
+                      : <div class="related-img-placeholder"></div>
+                    }
+                  </div>
+                  <div class="related-body">
+                    {pCats[0] && <div class="related-cat">{pCats[0]}</div>}
+                    <div class="related-title">{p.title}</div>
+                    <div class="related-date">{pDate}</div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+
+
+      <!-- Prev/Next minimal navigation -->
+      {(prevPost || nextPost) && (
+        <nav class="post-nav">
+          {prevPost && (
+            <a class="post-nav-item prev" href={`/posts/${prevPost.slug}/`}>
+              <span class="post-nav-label">← 上一篇</span>
+              <span class="post-nav-title">{prevPost.title}</span>
+            </a>
+          )}
+          {nextPost && (
+            <a class="post-nav-item next" href={`/posts/${nextPost.slug}/`}>
+              <span class="post-nav-label">下一篇 →</span>
+              <span class="post-nav-title">{nextPost.title}</span>
+            </a>
+          )}
+        </nav>
+      )}
+
+      <!-- Comments -->
+      <GiscusComments />
+    </div>
+
+    <!-- Sidebar: TOC -->
+    <aside class="post-sidebar">
+      <div class="widget toc-widget">
+        <div class="widget-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span>目录</span>
+        </div>
+        <div class="toc-body" id="toc-container">
+          <!-- Filled by JS -->
+          <p class="toc-empty">生成中…</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <!-- Zen Mode Exit Button -->
+  <button id="zen-exit-btn" class="zen-exit-btn" aria-label="退出阅读模式">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    退出阅读模式
+  </button>
+</BaseLayout>
+
+<script>
+  // Auto-generate TOC from article headings
+  // - h2: always visible, collapsed by default (children hidden)
+  // - h3: hidden until their parent h2 group is scrolled into view, then auto-expand
+  function buildTOC() {
+    const container = document.getElementById('toc-container');
+    if (!container) return;
+    const headings = Array.from(
+      document.querySelectorAll<HTMLHeadingElement>('.prose h2, .prose h3')
+    );
+    if (headings.length === 0) {
+      document.querySelector('.post-sidebar')?.remove();
+      document.querySelector('.post-wrap')?.classList.add('no-sidebar');
+      return;
+    }
+
+    // Assign ids if missing
+    headings.forEach((h, i) => { if (!h.id) h.id = `heading-${i}`; });
+
+    // Build grouped structure: each h2 owns the h3s that follow it
+    type Group = { h2: HTMLHeadingElement; h3s: HTMLHeadingElement[] };
+    const groups: Group[] = [];
+    let cur: Group | null = null;
+    for (const h of headings) {
+      if (h.tagName === 'H2') {
+        cur = { h2: h, h3s: [] };
+        groups.push(cur);
+      } else if (h.tagName === 'H3') {
+        if (!cur) {
+          groups.push({ h2: h, h3s: [] });
+        } else {
+          cur.h3s.push(h);
+        }
+      }
+    }
+
+    // Render TOC using DOM API (no innerHTML to avoid potential XSS)
+    const ul = document.createElement('ul');
+    ul.className = 'toc-list';
+
+    function createTOCLink(heading: HTMLHeadingElement): HTMLAnchorElement {
+      const a = document.createElement('a');
+      a.href = `#${heading.id}`;
+      a.textContent = heading.textContent;
+      return a;
+    }
+
+    for (const g of groups) {
+      // h2 item
+      const liH2 = document.createElement('li');
+      liH2.className = 'toc-item toc-h2';
+      liH2.dataset.id = g.h2.id;
+      liH2.appendChild(createTOCLink(g.h2));
+      ul.appendChild(liH2);
+
+      // h3 sub-list (hidden by default)
+      if (g.h3s.length > 0) {
+        const subUl = document.createElement('ul');
+        subUl.className = 'toc-sub collapsed';
+        subUl.dataset.parent = g.h2.id;
+        for (const h3 of g.h3s) {
+          const liH3 = document.createElement('li');
+          liH3.className = 'toc-item toc-h3';
+          liH3.dataset.id = h3.id;
+          liH3.appendChild(createTOCLink(h3));
+          subUl.appendChild(liH3);
+        }
+        ul.appendChild(subUl);
+      }
+    }
+
+    container.replaceChildren(ul);
+
+    // Scrollspy: track which h2 group is currently in view
+    // When an h2 enters view → expand its h3 sub-list
+    // When an h2 leaves view → collapse its h3 sub-list (unless the next h2 is expanding it)
+    const h2Els = groups.map(g => g.h2);
+    let activeH2Id: string | null = null;
+
+    function setActiveHeading(id: string) {
+      // Remove active from all
+      container.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
+      // Set active
+      const li = container.querySelector<HTMLElement>(`.toc-item[data-id="${id}"]`);
+      li?.classList.add('active');
+    }
+
+    function expandGroup(h2Id: string) {
+      if (activeH2Id === h2Id) return;
+      // Collapse previous group
+      if (activeH2Id) {
+        const prev = container.querySelector<HTMLElement>(`.toc-sub[data-parent="${activeH2Id}"]`);
+        prev?.classList.add('collapsed');
+      }
+      activeH2Id = h2Id;
+      // Expand new group
+      const sub = container.querySelector<HTMLElement>(`.toc-sub[data-parent="${h2Id}"]`);
+      sub?.classList.remove('collapsed');
+    }
+
+    // Use IntersectionObserver to detect which h2/h3 is visible
+    // We track all headings, but drive collapse logic from h2s only
+    const allIds = new Set(headings.map(h => h.id));
+
+    // Map from heading id → h2 group id
+    const toH2: Map<string, string> = new Map();
+    for (const g of groups) {
+      toH2.set(g.h2.id, g.h2.id);
+      for (const h3 of g.h3s) toH2.set(h3.id, g.h2.id);
+    }
+
+    // Keep a sorted list of heading positions to determine "topmost visible"
+    function getTopmostVisible(): string | null {
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height') || '60', 10);
+      let best: HTMLHeadingElement | null = null;
+      for (const h of headings) {
+        const rect = h.getBoundingClientRect();
+        if (rect.top <= vh * 0.45 && rect.bottom >= navH) {
+          best = h;
+          break;  // headings are in DOM order, take first in upper half
+        }
+      }
+      // Fallback: last heading above viewport center
+      if (!best) {
+        for (let i = headings.length - 1; i >= 0; i--) {
+          const rect = headings[i].getBoundingClientRect();
+          if (rect.top <= vh * 0.45) { best = headings[i]; break; }
+        }
+      }
+      return best?.id ?? null;
+    }
+
+    function onScroll() {
+      const id = getTopmostVisible();
+      if (!id) return;
+      const h2Id = toH2.get(id);
+      if (h2Id) {
+        expandGroup(h2Id);
+        setActiveHeading(id);
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Initial run
+    onScroll();
+  }
+
+  buildTOC();
+
+  // Copy link
+  document.getElementById('copy-link')?.addEventListener('click', function() {
+    navigator.clipboard.writeText(location.href).then(() => {
+      this.textContent = '✅ 已复制';
+      setTimeout(() => (this.textContent = '🔗 复制链接'), 2000);
+    });
+  });
+
+  // Zen mode toggle
+  const readingModeBtn = document.getElementById('reading-mode-toggle');
+  const zenExitBtn = document.getElementById('zen-exit-btn');
+  
+  if (readingModeBtn) {
+    const savedMode = localStorage.getItem('inkwell-zen-mode');
+    if (savedMode === 'true') {
+      document.body.classList.add('zen-mode-active');
+    }
+
+    readingModeBtn.addEventListener('click', function() {
+      const isActive = document.body.classList.toggle('zen-mode-active');
+      localStorage.setItem('inkwell-zen-mode', isActive ? 'true' : 'false');
+    });
+  }
+  
+  if (zenExitBtn) {
+    zenExitBtn.addEventListener('click', function() {
+      document.body.classList.remove('zen-mode-active');
+      localStorage.setItem('inkwell-zen-mode', 'false');
+    });
+  }
+
+  // Bind ESC key to exit Zen mode
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.body.classList.contains('zen-mode-active')) {
+      document.body.classList.remove('zen-mode-active');
+      localStorage.setItem('inkwell-zen-mode', 'false');
+    }
+    // Also close lightbox on ESC
+    if (e.key === 'Escape') {
+      document.getElementById('inkwell-lightbox')?.classList.remove('open');
+    }
+  });
+
+  // ── Image Lightbox ────────────────────────────────────────────────────────
+  (function() {
+    // Guard: skip entirely if no prose images on this page
+    if (!document.querySelector('.prose img')) return;
+    const lb = document.createElement('div');
+    lb.id = 'inkwell-lightbox';
+    lb.className = 'inkwell-lightbox';
+    lb.innerHTML = '<button class="inkwell-lightbox-close" aria-label="关闭">×</button><img alt="放大图片" />';
+    document.body.appendChild(lb);
+
+    const lbImg = lb.querySelector('img') as HTMLImageElement;
+    const lbClose = lb.querySelector('.inkwell-lightbox-close') as HTMLButtonElement;
+
+    function openLightbox(src: string, alt: string) {
+      lbImg.src = src;
+      lbImg.alt = alt || '放大图片';
+      lb.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lb.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Attach click handlers to all prose images
+    document.querySelectorAll('.prose img').forEach((img: Element) => {
+      const imgEl = img as HTMLImageElement;
+      imgEl.addEventListener('click', () => openLightbox(imgEl.src, imgEl.alt));
+    });
+
+    // Close on backdrop click or close button
+    lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+    lbClose.addEventListener('click', closeLightbox);
+  })();
+</script>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+  }
+  .hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(.72);
+  }
+  .hero-img-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, #a29bfe 100%);
+  }
+  [data-theme="dark"] .hero-img-placeholder {
+    background: linear-gradient(135deg, #1a2a50 0%, #2d1f50 100%);
+  }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,.08) 0%, rgba(0,0,0,.62) 100%);
+  }
+  .hero-content {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 40px var(--space-page) 36px;
+    color: #fff;
+  }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: .72;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb a:hover { opacity: 1; text-decoration: underline; }
+  .breadcrumb-current { opacity: .9; }
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.45;
+    text-shadow: 0 2px 16px rgba(0,0,0,.5);
+    margin-bottom: 16px;
+    max-width: 820px;
+  }
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    padding: 4px 12px;
+    border-radius: var(--radius-badge);
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,.2);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    transition: background .2s;
+  }
+  .badge:hover { background: rgba(255,255,255,.35); }
+  .meta-item { font-size: 13px; opacity: .82; }
+
+  /* Reading mode button */
+  .reading-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--radius-badge);
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,.2);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: inherit;
+  }
+  .reading-mode-btn:hover { background: rgba(255,255,255,.35); }
+  .reading-mode-btn.active {
+    background: rgba(75, 123, 236, 0.6);
+  }
+
+
+
+  /* Layout */
+  .post-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 36px var(--space-page) 80px;
+    display: grid;
+    grid-template-columns: 1fr 268px;
+    gap: var(--gap-section);
+    align-items: start;
+  }
+  .post-wrap.no-sidebar {
+    grid-template-columns: 1fr;
+    max-width: 920px;
+  }
+  .post-main {
+    min-width: 0;
+  }
+
+  /* Article card */
+  .article-card {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    padding: 40px 48px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .article-card .prose > * {
+    max-width: 100%;
+  }
+  .article-card .prose img {
+    max-width: 100%;
+    height: auto;
+  }
+  .article-card .prose table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* Article footer */
+  .article-footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .timestamps {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .ts-item { font-size: 13px; color: var(--text-muted); }
+  .ts-item strong { color: var(--text-meta); font-weight: 500; }
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+  }
+  .tag-label { font-size: 13px; color: var(--text-muted); }
+  .article-tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border: 1px solid var(--ai-border);
+    transition: all .2s;
+  }
+  .article-tag:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .share-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .share-label { font-size: 13px; color: var(--text-muted); }
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-meta);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: inherit;
+  }
+  .share-btn:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .license {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    line-height: 1.6;
+  }
+  .license a { color: var(--accent); }
+
+  /* Related posts */
+  .related-section { margin-top: 36px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .section-header-line {
+    width: 4px; height: 20px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .section-header-text {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .related-card {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: transform .25s, box-shadow .25s;
+    display: block;
+    color: inherit;
+  }
+  .related-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+  .related-img-wrap { overflow: hidden; }
+  .related-img { width: 100%; height: 130px; object-fit: cover; transition: transform .4s; }
+  .related-img-placeholder {
+    width: 100%; height: 130px;
+    background: linear-gradient(135deg, var(--accent-soft), var(--tag-bg));
+  }
+  .related-card:hover .related-img { transform: scale(1.04); }
+  .related-body { padding: 12px 14px; }
+  .related-cat { font-size: 11px; color: var(--tag-text); font-weight: 600; margin-bottom: 5px; }
+  .related-title {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color .2s;
+  }
+  .related-card:hover .related-title { color: var(--accent); }
+  .related-date { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+  /* Post Navigation */
+  .post-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 36px;
+  }
+  .post-nav-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: all .25s;
+    color: inherit;
+  }
+  .post-nav-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent);
+  }
+  .post-nav-item.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+  .post-nav-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .post-nav-title {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: color .2s;
+  }
+  .post-nav-item:hover .post-nav-title {
+    color: var(--accent);
+  }
+
+
+
+  /* Image Lightbox */
+  .inkwell-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.90);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+    padding: 20px;
+  }
+  .inkwell-lightbox.open { display: flex; }
+  .inkwell-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 20px 80px rgba(0,0,0,.8);
+    cursor: default;
+  }
+  .inkwell-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 28px;
+    color: rgba(255,255,255,.7);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    transition: color .2s;
+  }
+  .inkwell-lightbox-close:hover { color: #fff; }
+  /* Make prose images feel clickable */
+  .prose img { cursor: zoom-in; }
+
+  /* Sidebar */
+  .post-sidebar {
+    position: sticky;
+    top: calc(var(--nav-height) + 20px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .widget {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: background .3s, border-color .3s;
+  }
+  .widget-header {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .widget-header span { color: var(--text-primary); }
+  /* Reading progress bar */
+  #reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1100;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), #a29bfe);
+    border-radius: 0 2px 2px 0;
+    transition: width .1s linear;
+    pointer-events: none;
+  }
+
+
+
+  /* Responsive */
+  @media (max-width: 1080px) {
+    .post-wrap { grid-template-columns: 1fr; padding: 24px var(--space-page) 48px; }
+    .post-sidebar { position: static; }
+    .related-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .hero { height: 340px; }
+    .hero-content { padding: 28px var(--space-page); }
+    .hero-title { font-size: 26px; }
+    .post-nav { grid-template-columns: 1fr; }
+    .post-nav-item.next { text-align: left; align-items: flex-start; }
+    .article-card { padding: 28px var(--space-page); }
+  }
+  @media (max-width: 640px) {
+    .hero { height: 280px; }
+    .hero-content { padding: 20px var(--space-page); }
+    .hero-title { font-size: 22px; margin-bottom: 12px; }
+    .breadcrumb { font-size: 12px; margin-bottom: 10px; }
+    .article-card { padding: 20px var(--space-page); }
+    .related-grid { grid-template-columns: 1fr; }
+    .share-row { flex-direction: column; align-items: flex-start; }
+    .hero-meta { gap: 8px; }
+    .post-sidebar { display: none; }
+  }
+
+  /* Small phones */
+  @media (max-width: 480px) {
+    .hero { height: 240px; }
+    .hero-content { padding: 16px var(--space-page); }
+    .hero-title { font-size: 20px; margin-bottom: 10px; }
+    .article-card { padding: 16px var(--space-page); }
+    .related-grid { gap: 12px; }
+    .post-nav-item { padding: 14px var(--space-card); }
+  }
+
+  /* Ultra-small phones */
+  @media (max-width: 400px) {
+    .hero { height: 210px; }
+    .hero-content { padding: 14px var(--space-page); }
+    .hero-title { font-size: 18px; margin-bottom: 8px; line-height: 1.4; }
+    .breadcrumb { font-size: 11px; gap: 4px; }
+    .article-card { padding: 14px var(--space-page); }
+    .post-nav-item { padding: 12px var(--space-card); }
+    .post-nav-title { font-size: 13px; }
+  }
+</style>
+
+<script is:inline>
+  // Reading progress bar
+  (function () {
+    var bar = document.getElementById('reading-progress');
+    if (!bar) return;
+    function update() {
+      var scrollTop = window.scrollY;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) + '%' : '0%';
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.prose pre').forEach(function (pre) {
+      // Extract language from class name (rehype-pretty-code adds language class)
+      var code = pre.querySelector('code');
+      var language = '';
+      var filename = '';
+
+      if (code) {
+        // Try data-language first (set by rehype-pretty-code meta)
+        language = code.getAttribute('data-language') || '';
+
+        // Extract from class: language-js, language-typescript, etc.
+        if (!language) {
+          var classList = code.className || pre.className || '';
+          var langMatch = classList.match(/language-(\w+)/);
+          if (langMatch) language = langMatch[1];
+        }
+
+        // Extract filename from data-meta (e.g., {myfile.ts} in markdown)
+        var meta = code.getAttribute('data-meta') || pre.getAttribute('data-meta') || '';
+        var filenameMatch = meta.match(/\{([^}]+)\}/);
+        if (filenameMatch) filename = filenameMatch[1];
+      }
+
+      // Add metadata attributes for AI agents
+      if (language) {
+        pre.setAttribute('data-language', language);
+        pre.setAttribute('aria-label', language + ' code');
+      }
+      if (filename) {
+        pre.setAttribute('data-filename', filename);
+      }
+
+      // Wrap pre in a relative container
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+
+
+      var btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.setAttribute('aria-label', '复制代码');
+      var SVG_COPY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      var SVG_CHECK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      btn.innerHTML = SVG_COPY + '复制';
+      wrap.appendChild(btn);
+
+      btn.addEventListener('click', function () {
+        var code = pre.querySelector('code');
+        var text = code ? code.innerText : pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add('copied');
+          btn.innerHTML = SVG_CHECK + '已复制';
+          setTimeout(function () {
+            btn.classList.remove('copied');
+            btn.innerHTML = SVG_COPY + '复制';
+          }, 1500);
+        });
+      });
+    });
+  });
+</script>

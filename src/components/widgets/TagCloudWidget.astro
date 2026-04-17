@@ -1,0 +1,72 @@
+---
+import { displayTag } from '../../utils/tag';
+
+interface Props {
+  tags: { name: string; count: number }[];
+}
+const { tags } = Astro.props;
+
+const maxCount = Math.max(...tags.map(t => t.count), 1);
+function sizeClass(count: number) {
+  const ratio = count / maxCount;
+  if (ratio > 0.66) return 'lg';
+  if (ratio > 0.33) return 'md';
+  return 'sm';
+}
+---
+
+<div class="widget">
+  <div class="widget-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    <span>标签</span>
+  </div>
+  <div class="widget-body">
+    <div class="tag-cloud">
+      {tags.map(tag => (
+        <a
+          class:list={['tag-item', sizeClass(tag.count)]}
+          href={`/tags/${encodeURIComponent(tag.name)}`}
+        >
+          {displayTag(tag.name)}
+        </a>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .widget {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: background .3s, border-color .3s;
+  }
+  .widget-header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .widget-header span { color: var(--text-primary); }
+  .widget-body { padding: 14px var(--space-widget); }
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag-item {
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text-meta);
+    border: 1px solid var(--border);
+    transition: all .2s;
+  }
+  .tag-item:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .tag-item.lg { font-size: 14px; font-weight: 600; }
+  .tag-item.md { font-size: 12px; }
+  .tag-item.sm { font-size: 11px; opacity: .85; }
+</style>

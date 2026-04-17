@@ -1,0 +1,324 @@
+---
+// Pagefind Search UI — loads after build when index is available
+---
+
+<div class="search-overlay" id="search-overlay" aria-hidden="true">
+  <div class="search-modal" role="dialog" aria-modal="true" aria-label="搜索">
+    <div class="search-header">
+      <div class="search-input-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="搜索文章..." autocomplete="off" />
+      </div>
+      <button class="search-close" id="search-close" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div id="search-results" class="search-results">
+      <div class="search-placeholder">输入关键词搜索文章</div>
+    </div>
+    <div class="search-footer">
+      <span>由 <a href="https://pagefind.app" target="_blank" rel="noopener">Pagefind</a> 提供全文搜索</span>
+      <kbd>Esc</kbd> 关闭
+    </div>
+  </div>
+</div>
+
+<style>
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 80px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .search-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .search-modal {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    overflow: hidden;
+    transform: translateY(-10px);
+    transition: transform .2s;
+  }
+  .search-overlay.open .search-modal { transform: translateY(0); }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .search-icon { color: var(--text-muted); flex-shrink: 0; }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 15px;
+    color: var(--text-primary);
+    padding: 0;
+    min-width: 0;
+  }
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-close {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: var(--bg);
+    color: var(--text-meta);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .2s;
+  }
+  .search-close:hover { background: var(--accent-soft); color: var(--accent); }
+
+  .search-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 60px;
+  }
+  .search-placeholder {
+    padding: 24px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .search-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .search-footer a { color: var(--accent); }
+  kbd {
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: var(--bg);
+    color: var(--text-meta);
+  }
+
+  /* Search result items */
+  :global(.pf-result) {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    cursor: pointer;
+  }
+  :global(.pf-result:last-child) { border-bottom: none; }
+  :global(.pf-result:hover) { background: var(--accent-soft); }
+  :global(.pf-result a) {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  :global(.pf-title) {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  :global(.pf-excerpt) {
+    font-size: 13px;
+    color: var(--text-meta);
+    line-height: 1.6;
+  }
+  :global(.pf-loading) {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  :global(mark) {
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  @media (max-width: 680px) {
+    .search-overlay { padding: 60px 12px 0; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var overlay  = document.getElementById('search-overlay');
+    var closeBtn = document.getElementById('search-close');
+    var searchBtn = document.getElementById('search-btn');
+    var input    = document.getElementById('search-input');
+    var resultsEl = document.getElementById('search-results');
+    var searchInstance = null;
+
+    async function loadPagefind() {
+      // pagefind.js is an ES Module, must use dynamic import
+      const pfModule = await import('/pagefind/pagefind.js');
+      return pfModule;
+    }
+
+    var debounceTimer;
+    async function doSearch(term) {
+      if (!searchInstance) return;
+      if (!term || !term.trim()) {
+        resultsEl.innerHTML = '<div class="search-placeholder">输入关键词搜索文章</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="pf-loading">搜索中...</div>';
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async function () {
+        try {
+          var search = await searchInstance.debouncedSearch(term, {}, 200);
+          if (!search) return;
+          var results = await Promise.all(search.results.map(function (r) { return r.data(); }));
+          if (results.length === 0) {
+            resultsEl.innerHTML = '<div class="pf-loading">未找到相关结果</div>';
+            return;
+          }
+          // Helper: escape HTML attribute values
+          function escAttr(s) {
+            return String(s)
+              .replace(/&/g, '&amp;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
+          }
+          // Helper: clean excerpt - only allow <mark> tags, strip all other HTML
+          function cleanExcerpt(html) {
+            if (!html) return '';
+            // First decode any HTML entities that Pagefind may have encoded
+            var tmp = document.createElement('textarea');
+            tmp.innerHTML = html;
+            var text = tmp.value;
+            // Create a div to parse the HTML
+            var div = document.createElement('div');
+            div.innerHTML = text;
+            // Walk through and keep only mark elements
+            function walk(node) {
+              if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+              if (node.nodeType !== Node.ELEMENT_NODE) return '';
+              var tag = node.tagName.toLowerCase();
+              if (tag === 'mark') {
+                return '<mark>' + Array.from(node.childNodes).map(walk).join('') + '</mark>';
+              }
+              return Array.from(node.childNodes).map(walk).join('');
+            }
+            return Array.from(div.childNodes).map(walk).join('');
+          }
+
+          var html = '';
+          results.forEach(function (r) {
+            // Escape title to prevent XSS (r.meta.title from Pagefind is raw content)
+            var escTitle = r.meta.title
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+            // URL escape for attributes
+            var escUrl = escAttr(r.url);
+            // Clean excerpt: DOM-based parsing to ensure only <mark> remains
+            var escExcerpt = cleanExcerpt(r.excerpt);
+            html += '<div class="pf-result" data-url="' + escUrl + '">';
+            html += '<a href="' + escUrl + '">';
+            html += '<div class="pf-title">' + escTitle + '</div>';
+            if (escExcerpt) html += '<div class="pf-excerpt">' + escExcerpt + '</div>';
+            html += '</a></div>';
+          });
+          resultsEl.innerHTML = html;
+
+          // Click to navigate
+          resultsEl.querySelectorAll('.pf-result').forEach(function (el) {
+            el.addEventListener('click', function (e) {
+              var url = el.dataset.url;
+              if (url) { window.location.href = url; }
+            });
+          });
+        } catch (err) {
+          console.error('Search error:', err);
+          resultsEl.innerHTML = '<div class="pf-loading">搜索出错，请重试</div>';
+        }
+      }, 200);
+    }
+
+    var initialized = false;
+    async function initSearch() {
+      if (initialized) {
+        if (input) input.focus();
+        return;
+      }
+      try {
+        // Wait for pagefind to finish initializing its WASM + index
+        var pf = await loadPagefind();
+        await pf.init();
+        searchInstance = pf;
+        initialized = true;
+        if (input) input.focus();
+      } catch (err) {
+        console.error('Pagefind init error:', err);
+        resultsEl.innerHTML = '<div class="pf-loading">搜索功能不可用，请确认已执行构建</div>';
+      }
+    }
+
+    function openSearch() {
+      if (!overlay) return;
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      initSearch();
+    }
+
+    function closeSearch() {
+      if (!overlay) return;
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (input) { input.value = ''; }
+      resultsEl.innerHTML = '<div class="search-placeholder">输入关键词搜索文章</div>';
+    }
+
+    if (searchBtn) searchBtn.addEventListener('click', openSearch);
+    if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+    if (overlay) overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeSearch();
+    });
+    if (input) input.addEventListener('input', function () {
+      doSearch(input.value);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeSearch();
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    });
+  })();
+</script>

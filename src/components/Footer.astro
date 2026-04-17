@@ -1,0 +1,71 @@
+---
+import { SITE } from '../config';
+
+const year = new Date().getFullYear();
+const startYear = new Date(SITE.startDate).getFullYear();
+const yearDisplay = startYear < year ? `${startYear}-${year}` : `${year}`;
+const { footer } = SITE;
+
+const poweredParts: { label: string; href: string }[] = [];
+if (footer.showPoweredBy) poweredParts.push({ label: 'Astro', href: 'https://astro.build' });
+if (footer.showTheme) poweredParts.push({ label: 'Inkwell', href: 'https://github.com/your-github-user/your-repo-name' });
+if (footer.showHosted) poweredParts.push({ label: footer.hostedLabel, href: footer.hostedUrl });
+---
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p>
+      © {yearDisplay} <a href="/">{SITE.author.name}</a>
+      {poweredParts.length > 0 && (
+        <>
+          {' · '}
+          {poweredParts.map((p, i) => (
+            <>
+              {i === 0 && footer.showPoweredBy && <span class="muted">Powered by </span>}
+              <a href={p.href} target="_blank" rel="noopener">{p.label}</a>
+              {i < poweredParts.length - 1 && ' · '}
+            </>
+          ))}
+        </>
+      )}
+    </p>
+    {footer.links.length > 0 && (
+      <p class="footer-sub">
+        {footer.links.map((link, i) => (
+          <>
+            {i > 0 && ' · '}
+            <a href={link.href}>{link.label}</a>
+          </>
+        ))}
+      </p>
+    )}
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 28px var(--space-page);
+    transition: background .3s, border-color .3s;
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .footer p {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .footer a {
+    color: var(--accent);
+    transition: opacity .2s;
+  }
+  .footer a:hover { opacity: .75; }
+  .muted { color: var(--text-muted); }
+  .footer-sub { font-size: 12px; }
+</style>

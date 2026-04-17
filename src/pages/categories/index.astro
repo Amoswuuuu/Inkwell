@@ -1,0 +1,129 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config';
+import { normalizeCats } from '../../utils/posts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const allPosts = (await getCollection('posts'))
+  .filter(p => !p.data.draft && p.data.published !== false);
+
+const catMap = new Map<string, number>();
+for (const post of allPosts) {
+  for (const c of normalizeCats(post.data.categories)) {
+    catMap.set(c, (catMap.get(c) ?? 0) + 1);
+  }
+}
+const categories = [...catMap.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, count]) => ({ name, count }));
+
+const colors = ['#4b7bec','#e17055','#00b894','#fdcb6e','#a29bfe','#fd79a8','#00cec9','#e84393','#6c5ce7','#fab1a0'];
+---
+
+<BaseLayout title="分类" description={`${SITE.title} 全部文章分类，共 ${categories.length} 个分类。`}>
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1 class="page-title">分类</h1>
+      <p class="page-sub">共 <strong>{categories.length}</strong> 个分类 · <strong>{allPosts.length}</strong> 篇文章</p>
+    </div>
+
+    <div class="cat-grid">
+      {categories.map((cat, i) => (
+        <a class="cat-card" href={`/categories/${encodeURIComponent(cat.name)}`}>
+          <div class="cat-icon" style={`background:${colors[i % colors.length]}22; color:${colors[i % colors.length]}`}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <div class="cat-info">
+            <span class="cat-name">{cat.name}</span>
+            <span class="cat-count">{cat.count} 篇</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .page-header {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .page-sub { font-size: 15px; color: var(--text-meta); }
+  .page-sub strong { color: var(--accent); }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .cat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+    color: inherit;
+  }
+  .cat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent);
+  }
+  .cat-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cat-info { flex: 1; min-width: 0; }
+  .cat-name {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cat-card:hover .cat-name { color: var(--accent); }
+  .cat-count { font-size: 12px; color: var(--text-muted); }
+  .cat-arrow {
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: transform .2s, color .2s;
+    flex-shrink: 0;
+  }
+  .cat-card:hover .cat-arrow { transform: translateX(4px); color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 32px 16px 60px; }
+    .cat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 400px) {
+    .cat-grid { grid-template-columns: 1fr; }
+  }
+</style>

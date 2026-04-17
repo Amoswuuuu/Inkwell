@@ -1,0 +1,81 @@
+---
+import { SITE } from '../config';
+
+// Giscus configuration comes from root config.yml
+const GISCUS_REPO = SITE.giscus.repo;
+const GISCUS_REPO_ID = SITE.giscus.repoId;
+const GISCUS_CATEGORY = SITE.giscus.category;
+const GISCUS_CATEGORY_ID = SITE.giscus.categoryId;
+---
+
+<div class="comment-section">
+  <div class="section-header">
+    <div class="section-header-line"></div>
+    <span class="section-header-text">评论</span>
+  </div>
+  <div class="giscus-wrap">
+    <script
+      src="https://giscus.app/client.js"
+      data-repo={GISCUS_REPO}
+      data-repo-id={GISCUS_REPO_ID}
+      data-category={GISCUS_CATEGORY}
+      data-category-id={GISCUS_CATEGORY_ID}
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="bottom"
+      data-theme="preferred_color_scheme"
+      data-lang={SITE.giscus.lang}
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    ></script>
+  </div>
+</div>
+
+<script>
+  // Sync Giscus theme with site dark mode
+  function updateGiscusTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const frame = document.querySelector<HTMLIFrameElement>('.giscus-frame');
+    if (frame) {
+      frame.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: isDark ? 'dark' : 'light' } } },
+        'https://giscus.app'
+      );
+    }
+  }
+
+  const observer = new MutationObserver(updateGiscusTheme);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+
+<style>
+  .comment-section { margin-top: 40px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .section-header-line {
+    width: 4px; height: 20px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .section-header-text {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .giscus-wrap {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    padding: 8px;
+    min-height: 120px;
+  }
+</style>

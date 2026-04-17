@@ -1,0 +1,214 @@
+---
+import { SITE } from '../../config';
+
+interface Props {
+  postCount?: number;
+  tagCount?: number;
+  wordCount?: string;
+  startDate?: string;
+  lastPostDate?: string;     // 最新文章日期 ISO 字符串，用于计算"最后活动"
+}
+const {
+  postCount = 0,
+  tagCount = 0,
+  wordCount = '0',
+  startDate = SITE.startDate,
+  lastPostDate,
+} = Astro.props;
+
+const si = SITE.siteInfo;
+const isBlock = si.statStyle !== 'text';
+
+// ── 计算运行天数 ──
+function calcRuntimeDays(start: string): number {
+  const diff = Date.now() - new Date(start).getTime();
+  return Math.max(0, Math.floor(diff / 86400000));
+}
+
+// ── 相对时间：X天前 / X周前 / X月前 / X年前 ──
+function timeAgo(date: Date): string {
+  const absDiff = Math.abs(Date.now() - date.getTime());
+  const days    = Math.floor(absDiff / 86400000);
+  const weeks   = Math.floor(days / 7);
+  const months  = Math.floor(days / 30);
+  const years   = Math.floor(days / 365);
+
+  if (years > 0)  return years + ' 年前';
+  if (months > 0) return months + ' 月前';
+  if (weeks > 0)  return weeks + ' 周前';
+  if (days > 0)   return days + ' 天前';
+  return '刚刚';
+}
+
+// ── 格式化字数（带单位）──
+function formatWordWithUnit(raw: string): string {
+  if (/[\u4e00-\u9fffwk万]/.test(raw)) return raw;
+  const n = Number(raw);
+  if (isNaN(n)) return raw + ' 字';
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万 字';
+  if (n >= 1000)  return (n / 1000).toFixed(1) + 'k 字';
+  return n + ' 字';
+}
+
+const runtimeDays = calcRuntimeDays(startDate);
+const lastActiveStr = lastPostDate ? timeAgo(new Date(lastPostDate)) : null;
+
+// Stats entries — 带 unit（block 模式下"最后活动"也作为卡片融入网格）
+const stats = [
+  { num: String(postCount), unit: ' 篇', label: '文章', show: si.showPostCount },
+  { num: tagCount, unit: ' 个', label: '标签', show: si.showTagCount },
+  { num: formatWordWithUnit(wordCount), unit: '', label: '总字数', show: si.showWordCount },
+  { num: lastActiveStr || '-', unit: '', label: '最后活动', show: !!(si.showLastUpdated && lastActiveStr) },
+].filter(s => s.show);
+---
+
+<div class="widget">
+  <div class="widget-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>站点信息</span>
+  </div>
+  <div class="widget-body">
+
+    {/* ── 已运行时间 ── */}
+    {si.showRuntime && (
+      isBlock ? (
+        <div class="runtime-row">
+          <span class="row-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            已运行
+          </span>
+          <span class="runtime-val">{runtimeDays} 天</span>
+        </div>
+      ) : (
+        <div class="text-row">
+          <span class="row-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            已运行时间
+          </span>
+          <span class="row-val">{runtimeDays} 天</span>
+        </div>
+      )
+    )}
+
+    {/* ── 数字统计：block 模式 → 2列网格；text 模式 → 文字行（带单位）── */}
+    {stats.length > 0 && (
+      isBlock ? (
+        <div class={`info-grid cols-${Math.min(stats.length, 2)}`}>
+          {stats.map(s => (
+            <div class="info-item">
+              <span class="info-num">{s.num}{s.unit}</span>
+              <span class="info-label">{s.label}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        stats.map(s => (
+          <div class="text-row">
+            <span class="row-label">
+              {s.label === '文章' && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              )}
+              {s.label === '标签' && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              )}
+              {s.label === '总字数' && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              )}
+              {s.label}
+            </span>
+            <span class="row-val">{s.num}{s.unit}</span>
+          </div>
+        ))
+      )
+    )}
+
+  </div>
+</div>
+
+<style>
+  .widget {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: background .3s, border-color .3s;
+  }
+  .widget-header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .widget-header span { color: var(--text-primary); }
+  .widget-body { padding: 14px var(--space-widget); display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── block 风格：已运行行 ── */
+  .runtime-row {
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .runtime-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* ── block 风格：数字网格 ── */
+  .info-grid { display: grid; gap: 8px; }
+  .info-grid.cols-1 { grid-template-columns: 1fr; }
+  .info-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .info-num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .info-label { font-size: 11px; color: var(--text-muted); }
+
+  /* ── text 风格 & 日期行（共用）── */
+  .text-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+  }
+  .row-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .row-val {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  @media (max-width: 640px) {
+    .info-num { font-size: 17px; }
+    .info-label { font-size: 10px; }
+    .info-item { padding: 8px 6px; }
+    .widget-body { padding: 12px 14px; }
+  }
+</style>

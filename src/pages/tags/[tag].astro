@@ -1,0 +1,96 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config';
+import { displayTag, internalTag } from '../../utils/tag';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+export async function getStaticPaths() {
+  const allPosts = (await getCollection('posts'))
+    .filter(p => !p.data.draft && p.data.published !== false);
+
+  const tagSet = new Set<string>();
+  for (const post of allPosts) {
+    const raw = post.data.tags;
+    if (!raw) continue;
+    // Support both YAML array and comma-separated string
+    const tags = Array.isArray(raw)
+      ? raw
+      : (typeof raw === 'string' ? raw.split(',').map(s => s.trim()) : [String(raw)]);
+    tags.forEach(t => t && tagSet.add(t.trim()));
+  }
+
+  return [...tagSet].map(rawTag => {
+    const tag = decodeURIComponent(rawTag);
+    // Support both internal (y2021) and display (2021) forms in URL
+    const displayForm = displayTag(tag);
+    return {
+      params: { tag: rawTag },
+      props: {
+        tag,
+        displayTag: displayForm,
+        posts: allPosts
+          .filter(p => {
+            const raw = p.data.tags;
+            if (!raw) return false;
+            const tags = Array.isArray(raw)
+              ? raw
+              : (typeof raw === 'string' ? raw.split(',').map(s => s.trim()) : [String(raw)]);
+            return tags.some(t => {
+              const decoded = decodeURIComponent(t.trim());
+              return decoded === tag || t.trim() === rawTag || t === rawTag
+                || decoded === internalTag(displayForm);
+            });
+          })
+          .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+      },
+    };
+  });
+}
+
+interface Props { tag: string; displayTag: string; posts: Awaited<ReturnType<typeof getCollection<'posts'>>> }
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`标签：${displayTag(tag)}`} description={`${SITE.title} 中「${displayTag(tag)}」标签下的所有文章，共 ${posts.length} 篇。`}>
+  <div class="page-wrap">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <a href="/">首页</a><span>›</span>
+        <a href="/tags">标签</a><span>›</span>
+        <span>{displayTag(tag)}</span>
+      </div>
+      <h1 class="page-title"># {displayTag(tag)}</h1>
+      <p class="page-sub">共 <strong>{posts.length}</strong> 篇文章</p>
+    </div>
+    <div class="post-list">
+      {posts.map(post => (
+        <PostCard
+          slug={post.data.abbrlink || post.id}
+          title={post.data.title}
+          date={post.data.date}
+          cover={post.data.cover}
+          categories={post.data.categories}
+          tags={post.data.tags}
+          description={post.data.description}
+        />
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+  .page-header { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-muted); margin-bottom: 14px;
+  }
+  .breadcrumb a { color: var(--text-meta); transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .page-title { font-family: var(--font-serif); font-size: 30px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .page-sub { font-size: 15px; color: var(--text-meta); }
+  .page-sub strong { color: var(--accent); }
+  .post-list { display: flex; flex-direction: column; gap: 20px; }
+  @media (max-width: 640px) { .page-wrap { padding: 32px 16px 60px; } }
+</style>

@@ -1,0 +1,146 @@
+---
+import { SITE } from '../config';
+
+interface Props {
+  image?: string;
+  title?: string;
+  subtitle?: string;
+  postCount?: number;
+  categoryCount?: number;
+  tagCount?: number;
+}
+
+const {
+  image = SITE.heroImage,
+  title = SITE.title,
+  subtitle = SITE.subtitle,
+  postCount = 0,
+  categoryCount = 0,
+  tagCount = 0,
+} = Astro.props;
+---
+
+<section class="hero hero-banner">
+  <img class="hero-img" src={image} alt="Banner" loading="eager" decoding="sync" fetchpriority="high" />
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">{title}</h1>
+    <p class="hero-sub">{subtitle}</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">{postCount}</span>
+        <span class="hero-stat-label">文章</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">{categoryCount}</span>
+        <span class="hero-stat-label">分类</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">{tagCount}</span>
+        <span class="hero-stat-label">标签</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    height: 380px;
+    overflow: hidden;
+  }
+  .hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(.78);
+    transition: filter .3s;
+  }
+  :global([data-theme="dark"]) .hero-img {
+    filter: brightness(.68);
+  }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(75,123,236,.25) 0%, rgba(0,0,0,.45) 100%);
+    transition: background .3s;
+  }
+  .hero-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    gap: 12px;
+    padding: 0 var(--space-page);
+  }
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-shadow: 0 2px 16px rgba(0,0,0,.4);
+  }
+  .hero-sub {
+    font-size: 16px;
+    opacity: .85;
+    letter-spacing: .06em;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 8px;
+  }
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .hero-stat-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .hero-stat-label {
+    font-size: 12px;
+    opacity: .75;
+    letter-spacing: .06em;
+  }
+
+  @media (max-width: 768px) {
+    .hero { height: 320px; }
+    .hero-title { font-size: 34px; }
+    .hero-sub { font-size: 15px; }
+    .hero-stats { gap: 24px; }
+  }
+  @media (max-width: 640px) {
+    .hero { height: 260px; }
+    .hero-title { font-size: 26px; }
+    .hero-sub { font-size: 14px; }
+    .hero-stats { gap: 18px; }
+    .hero-stat-num { font-size: 17px; }
+    .hero-stat-label { font-size: 11px; }
+  }
+
+  /* Small phones */
+  @media (max-width: 480px) {
+    .hero { height: 220px; }
+    .hero-title { font-size: 22px; letter-spacing: .02em; }
+    .hero-sub { font-size: 13px; opacity: .8; }
+    .hero-stats { gap: 14px; margin-top: 4px; }
+    .hero-stat-num { font-size: 16px; }
+  }
+
+  /* Ultra-small phones */
+  @media (max-width: 400px) {
+    .hero { height: 190px; }
+    .hero-title { font-size: 19px; }
+    .hero-sub { font-size: 12px; display: none; }
+    .hero-stats { gap: 10px; }
+    .hero-stat-num { font-size: 14px; }
+    .hero-stat-label { font-size: 10px; }
+  }
+</style>

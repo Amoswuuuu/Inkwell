@@ -1,0 +1,43 @@
+# build output
+dist/
+dist-deploy/
+dist-deploy-new/
+tmp-compare/
+# generated types
+.astro/
+
+# 博文源文件（默认目录，可通过 config.yml content.postsDir 自定义到外部路径）
+# src/content/posts/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+.env.local
+
+# macOS-specific files
+.DS_Store
+
+# Windows-specific files
+Thumbs.db
+Desktop.ini
+
+# jetbrains setting folder
+.idea/
+
+# VS Code
+.vscode/
+
+# Node compile cache
+node-compile-cache/
+
+# WorkBuddy internal docs (not for open source)
+.workbuddy/

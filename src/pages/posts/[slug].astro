@@ -1,0 +1,68 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BlogLayout from '../../layouts/BlogLayout.astro';
+import { SITE } from '../../config';
+import { normalizeCats } from '../../utils/posts';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', p => !p.data.draft && p.data.published !== false);
+  return posts.map(post => ({
+    params: { slug: post.data.abbrlink || post.id },
+    props: { post },
+  }));
+}
+
+interface Props { post: CollectionEntry<'posts'> }
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Get all posts sorted by date
+const allPosts = (await getCollection('posts', p => !p.data.draft && p.data.published !== false))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Find current post index
+const currentIndex = allPosts.findIndex(p => p.id === post.id);
+
+// Previous and next posts
+const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+const nextPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+
+// Related posts: same category, excluding self
+const postCats = normalizeCats(post.data.categories);
+
+const related = allPosts
+  .filter(p => p.id !== post.id && normalizeCats(p.data.categories).some(c => postCats.includes(c)))
+  .slice(0, 3)
+  .map(p => ({
+    slug: p.data.abbrlink || p.id,
+    title: p.data.title,
+    date: p.data.date,
+    cover: p.data.cover,
+    categories: p.data.categories,
+  }));
+
+// Estimate reading time (~400 chars/min for Chinese)
+const wordCount = (post.body ?? '').length;
+const readingTime = Math.max(1, Math.round(wordCount / 400));
+---
+
+<BlogLayout
+  title={post.data.title}
+  slug={post.data.abbrlink || post.id}
+  date={post.data.date}
+  updated={post.data.updated}
+  cover={post.data.cover}
+  categories={post.data.categories}
+  tags={post.data.tags}
+  description={post.data.description}
+  ai_summary={post.data.ai_summary ?? []}
+  aiModel={SITE.aiAbstract.label}
+  license={post.data.license}
+  relatedPosts={related}
+  readingTime={readingTime}
+  prevPost={prevPost ? { slug: prevPost.data.abbrlink || prevPost.id, title: prevPost.data.title } : undefined}
+  nextPost={nextPost ? { slug: nextPost.data.abbrlink || nextPost.id, title: nextPost.data.title } : undefined}
+  math={post.data.math}
+>
+  <Content />
+</BlogLayout>

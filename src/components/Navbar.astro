@@ -1,0 +1,344 @@
+---
+import { SITE } from '../config';
+
+const navLinks = SITE.navLinks;
+const { pathname } = Astro.url;
+---
+
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-logo" href="/">
+      <svg class="logo-icon" width="26" height="26" viewBox="0 0 128 128" fill="none">
+        <defs>
+          <linearGradient id="inkDrop" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#2563eb"/>
+            <stop offset="100%" style="stop-color:#1e40af"/>
+          </linearGradient>
+        </defs>
+        <path d="M64 12 C64 12 28 55 28 78 C28 97 44 112 64 112 C84 112 100 97 100 78 C100 55 64 12 64 12 Z" fill="url(#inkDrop)"/>
+        <ellipse cx="50" cy="72" rx="8" ry="12" fill="#60a5fa" opacity="0.35" transform="rotate(-20 50 72)"/>
+        <circle cx="64" cy="52" r="6" fill="#ffffff" opacity="0.9"/>
+      </svg>
+      <span class="logo-text">{SITE.title}<span class="logo-dot">.</span></span>
+    </a>
+
+    <ul class="navbar-nav" id="main-nav">
+      {navLinks.map(link => (
+        <li>
+          <a
+            href={link.href}
+            class:list={[{ active: pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href)) }]}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <a
+      class="travelling-btn"
+      href="https://www.travellings.cn/go"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="开往 - 漫游优质博客"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      开往
+    </a>
+
+    <div class="navbar-actions">
+      <button class="btn-icon" id="search-btn" title="搜索" aria-label="搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+      </button>
+      <div class="theme-toggle" id="theme-toggle" role="radiogroup" aria-label="主题切换">
+        <button class="theme-opt" data-theme-val="auto" title="自动" aria-label="自动主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+        </button>
+        <button class="theme-opt" data-theme-val="light" title="浅色" aria-label="浅色主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <button class="theme-opt" data-theme-val="dark" title="深色" aria-label="深色主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+      <button class="btn-icon nav-hamburger" id="hamburger" aria-label="菜单" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-height);
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    transition: background .3s, border-color .3s;
+  }
+  :global([data-theme="dark"]) .navbar {
+    background: rgba(15,17,23,.88);
+  }
+  .navbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 var(--space-page);
+  }
+  .navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: .02em;
+    flex-shrink: 0;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    transition: transform .2s ease;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  }
+  .navbar-logo:hover .logo-icon {
+    transform: translateY(-1px) scale(1.08);
+  }
+  .logo-dot { color: var(--accent); }
+
+  .navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    flex: 1;
+  }
+  .navbar-nav a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text-meta);
+    transition: background .2s, color .2s;
+    white-space: nowrap;
+  }
+  .navbar-nav a:hover, .navbar-nav a.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .travelling-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #4b7bec, #a29bfe);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity .2s, transform .2s;
+  }
+  .travelling-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-meta);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s, color .2s;
+  }
+  .btn-icon:hover { background: var(--accent-soft); color: var(--accent); }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 2px;
+    gap: 1px;
+  }
+  .theme-opt {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .theme-opt:hover { color: var(--text-primary); }
+  .theme-opt.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+
+  .nav-hamburger { display: none; }
+
+  /* Tablet & below — collapse nav, simplify actions */
+  @media (max-width: 768px) {
+    .navbar-nav {
+      display: none;
+      position: absolute;
+      top: var(--nav-height);
+      left: 0; right: 0;
+      flex-direction: column;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      gap: 4px;
+      box-shadow: var(--shadow-hover);
+      z-index: 99;
+    }
+    .navbar-nav.open { display: flex; }
+    .navbar-nav a { display: block; padding: 10px 14px; }
+    .nav-hamburger { display: flex; }
+    .travelling-btn { display: none; }
+
+    /* Theme toggle: strip border/background so buttons look like plain icons */
+    .theme-toggle {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      gap: 2px;
+    }
+    .theme-opt {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+    }
+    .theme-opt.active {
+      background: var(--accent-soft) !important;
+      color: var(--accent) !important;
+      box-shadow: none !important;
+    }
+    .btn-icon { width: 34px; height: 34px; }
+    .navbar-actions { gap: 2px; }
+  }
+
+  /* Phone — hide auto option, shrink everything */
+  @media (max-width: 480px) {
+    .navbar-inner {
+      padding: 0 var(--space-page) !important;
+      gap: 4px;
+    }
+    .navbar-logo { font-size: 16px; gap: 5px; }
+    .logo-icon { width: 22px; height: 22px; }
+    /* Only show light/dark on phones — auto is hidden */
+    .theme-opt[data-theme-val="auto"] { display: none; }
+    .theme-opt {
+      width: 32px; height: 32px;
+    }
+    .btn-icon { width: 32px; height: 32px; }
+    .nav-hamburger { width: 32px; height: 32px; }
+  }
+
+  /* Ultra-small phones (SE=375, 12 Pro=390, Xiaomi14=384~431) */
+  @media (max-width: 400px) {
+    .navbar-inner { gap: 2px; }
+    .navbar-logo { font-size: 14px; gap: 4px; }
+    .logo-icon { width: 20px; height: 20px; }
+    .logo-text { letter-spacing: 0; }
+    .theme-opt { width: 30px; height: 30px; }
+    .btn-icon { width: 30px; height: 30px; }
+    .nav-hamburger { width: 30px; height: 30px; }
+  }
+</style>
+
+<script>
+  const html = document.documentElement;
+  const themeContainer = document.getElementById('theme-toggle');
+  const themeButtons = themeContainer?.querySelectorAll('.theme-opt');
+
+  type ThemeMode = 'auto' | 'light' | 'dark';
+
+  function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
+    if (mode === 'auto') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return mode;
+  }
+
+  function applyTheme(mode: ThemeMode) {
+    const effective = getEffectiveTheme(mode);
+    html.setAttribute('data-theme', effective);
+    localStorage.setItem('inkwell-theme', mode);
+    themeButtons?.forEach((btn) => {
+      btn.classList.toggle('active', (btn as HTMLElement).dataset.themeVal === mode);
+    });
+  }
+
+  // Restore saved theme (default to 'auto')
+  const saved = (localStorage.getItem('inkwell-theme') || 'auto') as ThemeMode;
+  // Only update the UI state - anti-flash script already set data-theme correctly
+  themeButtons?.forEach((btn) => {
+    btn.classList.toggle('active', (btn as HTMLElement).dataset.themeVal === saved);
+  });
+
+  // Listen for system theme changes when in auto mode
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const current = (localStorage.getItem('inkwell-theme') || 'auto') as ThemeMode;
+    if (current === 'auto') applyTheme('auto');
+  });
+
+  // Click handlers
+  themeButtons?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = (btn as HTMLElement).dataset.themeVal as ThemeMode;
+      applyTheme(mode);
+    });
+  });
+
+  // Hamburger
+  const hamburger = document.getElementById('hamburger');
+  const nav = document.getElementById('main-nav');
+  hamburger?.addEventListener('click', () => {
+    const isOpen = nav?.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  // Close menu on outside click
+  document.addEventListener('click', (e) => {
+    if (!hamburger?.contains(e.target as Node) && !nav?.contains(e.target as Node)) {
+      nav?.classList.remove('open');
+      hamburger?.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>

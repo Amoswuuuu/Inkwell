@@ -1,0 +1,166 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../config';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GiscusComments from '../components/GiscusComments.astro';
+
+// 获取友链页面内容
+const pages = await getCollection('pages');
+const friendsPage = pages.find(p => p.id === 'friends.md' || p.id === 'friends');
+if (!friendsPage) {
+  return Astro.redirect('/404');
+}
+
+// 解析友链数据（格式: ## 分组标题 / - 名称 | 头像 | 链接 | 描述）
+function parseFriends(content: string) {
+  const groups: { group: string; items: any[] }[] = [];
+  const lines = content.split('\n');
+  let currentGroup: { group: string; items: any[] } | null = null;
+
+  for (const line of lines) {
+    const groupMatch = line.match(/^##\s+(.+)/);
+    if (groupMatch) {
+      // 立即创建新分组
+      currentGroup = { group: groupMatch[1], items: [] };
+      groups.push(currentGroup);
+      continue;
+    }
+
+    const itemMatch = line.match(/^-\s+(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)/);
+    if (itemMatch && currentGroup) {
+      currentGroup.items.push({
+        title: itemMatch[1],
+        avatar: itemMatch[2],
+        url: itemMatch[3],
+        description: itemMatch[4],
+      });
+    }
+  }
+
+  return groups;
+}
+
+// 从页面 body 中提取友链数据（### 之后的内容）
+const content = friendsPage.body;
+const friendGroups = parseFriends(content);
+---
+
+<BaseLayout title={friendsPage.data.title} description={friendsPage.data.description}>
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1 class="page-title">{friendsPage.data.title}</h1>
+      <p class="page-sub">{friendsPage.data.description}</p>
+    </div>
+
+    {friendGroups.map(group => (
+      <section class="friend-group">
+        <h2 class="group-title">{group.group}</h2>
+        <div class="friend-grid">
+          {group.items.map(friend => (
+            <a class="friend-card" href={friend.url} target="_blank" rel="noopener noreferrer">
+              <img class="friend-avatar" src={friend.avatar} alt={friend.title} loading="lazy" decoding="async" fetchpriority="low" />
+              <div class="friend-info">
+                <div class="friend-name">{friend.title}</div>
+                {friend.description && <div class="friend-desc">{friend.description}</div>}
+              </div>
+              <div class="friend-arrow">↗</div>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+
+    <div class="apply-section">
+      <h2 class="apply-title">申请友链</h2>
+      <div class="apply-info prose">
+        <p>欢迎交换友链！请确保：</p>
+        <ul>
+          <li>博客内容健康积极，持续更新</li>
+          <li>已在你的博客添加本站友链</li>
+        </ul>
+        <p>本站信息：</p>
+        <ul>
+          <li><strong>名称</strong>：{SITE.title}</li>
+          <li><strong>地址</strong>：{SITE.url}</li>
+          <li><strong>描述</strong>：{SITE.description}</li>
+        </ul>
+        <p>申请方式：发送邮件至 <a href={`mailto:${SITE.social.email}`}>{SITE.social.email}</a>，或在下方评论留言。</p>
+      </div>
+    </div>
+
+    <GiscusComments />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+  .page-header { margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .page-title { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  .page-sub { font-size: 15px; color: var(--text-meta); }
+
+  .friend-group { margin-bottom: 40px; }
+  .group-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  .friend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .friend-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+    color: inherit;
+  }
+  .friend-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+  .friend-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-soft);
+    flex-shrink: 0;
+  }
+  .friend-info { flex: 1; min-width: 0; }
+  .friend-name { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; transition: color .2s; }
+  .friend-card:hover .friend-name { color: var(--accent); }
+  .friend-desc { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .friend-arrow { font-size: 14px; color: var(--text-muted); flex-shrink: 0; transition: color .2s, transform .2s; }
+  .friend-card:hover .friend-arrow { color: var(--accent); transform: translate(2px,-2px); }
+
+  .apply-section { margin-top: 48px; }
+  .apply-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  .apply-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-card);
+  }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 32px 16px 60px; }
+    .friend-grid { grid-template-columns: 1fr; }
+    .apply-info { padding: 18px; }
+  }
+</style>

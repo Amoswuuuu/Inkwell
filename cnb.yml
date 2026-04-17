@@ -1,0 +1,27 @@
+# CNB.COOL 平台配置
+# 将此仓库同步到 cnb.cool 平台后，可通过 cnb.cool CDN 加速访问
+# CNB 平台地址：https://cnb.cool
+#
+# 使用方法：
+#   1. 在 cnb.cool 注册并创建项目
+#   2. 修改下方 domains 和 origin.repo 为你自己的信息
+#   3. 推送代码后 CDN 自动生效
+
+name: Inkwell
+version: 1.0.0
+
+# CDN 加速域名（修改为你在 cnb.cool 创建的域名）
+domains:
+  - your-project.cnb.cool
+
+# 回源配置（修改为你自己的 GitHub 仓库和分支）
+origin:
+  type: github
+  repo: your-github-user/your-repo-name
+  branch: gh-pages
+  path: /
+
+# 缓存配置
+cache:
+  max-age: 86400          # 1天
+  stale-while-revalidate: 604800  # 7天

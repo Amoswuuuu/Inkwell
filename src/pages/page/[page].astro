@@ -1,0 +1,223 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config';
+import { buildSidebarData, formatChars } from '../../utils/posts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeroBanner from '../../components/HeroBanner.astro';
+import PostCard from '../../components/PostCard.astro';
+import PostCardVertical from '../../components/PostCardVertical.astro';
+import ProfileWidget from '../../components/widgets/ProfileWidget.astro';
+import CategoryWidget from '../../components/widgets/CategoryWidget.astro';
+import TagCloudWidget from '../../components/widgets/TagCloudWidget.astro';
+import SiteInfoWidget from '../../components/widgets/SiteInfoWidget.astro';
+
+export async function getStaticPaths() {
+  const allPosts = (await getCollection('posts'))
+    .filter(p => !p.data.draft && p.data.published !== false)
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+  const totalPages = Math.ceil(allPosts.length / SITE.postsPerPage);
+  const sidebar = buildSidebarData(allPosts);
+
+  return Array.from({ length: totalPages - 1 }, (_, i) => {
+    const page = i + 2; // pages 2, 3, ...
+    return {
+      params: { page: String(page) },
+      props: {
+        page,
+        totalPages,
+        posts: allPosts.slice((page - 1) * SITE.postsPerPage, page * SITE.postsPerPage),
+        // Sidebar stats only (not full allPosts) to reduce HTML size
+        postCount: allPosts.length,
+        categories: sidebar.categories,
+        tags: sidebar.tags,
+        totalChars: sidebar.totalChars,
+        lastPostDate: sidebar.lastPostDate,
+      },
+    };
+  });
+}
+
+interface Props {
+  page: number;
+  totalPages: number;
+  posts: Awaited<ReturnType<typeof getCollection<'posts'>>>;
+  postCount: number;
+  categories: { name: string; count: number }[];
+  tags: { name: string; count: number }[];
+  totalChars: number;
+  lastPostDate?: string;
+}
+const { page, totalPages, posts, postCount, categories, tags, totalChars, lastPostDate } = Astro.props;
+const listStyle = SITE.post.listStyle ?? 'horizontal';
+---
+
+<BaseLayout title={`第 ${page} 页 — ${SITE.title}`} description={SITE.description}>
+  <HeroBanner
+    postCount={postCount}
+    categoryCount={categories.length}
+    tagCount={tags.length}
+  />
+
+  <div class="main-wrap">
+    <main>
+      <div class="section-header">
+        <div class="section-header-line"></div>
+        <span class="section-header-text">最新文章</span>
+        <span class="page-indicator">第 {page} / {totalPages} 页</span>
+      </div>
+
+      <div class={listStyle === 'card' ? 'post-grid' : 'post-list'}>
+        {posts.map(post => listStyle === 'card'
+          ? (
+            <PostCardVertical
+              slug={post.data.abbrlink || post.id}
+              title={post.data.title}
+              date={post.data.date}
+              cover={post.data.cover}
+              categories={post.data.categories}
+              tags={post.data.tags}
+              description={post.data.description}
+              aiSummary={post.data.ai_summary}
+            />
+          ) : (
+            <PostCard
+              slug={post.data.abbrlink || post.id}
+              title={post.data.title}
+              date={post.data.date}
+              cover={post.data.cover}
+              categories={post.data.categories}
+              tags={post.data.tags}
+              description={post.data.description}
+              aiSummary={post.data.ai_summary}
+            />
+          )
+        )}
+      </div>
+
+      <nav class="pagination" aria-label="分页">
+        {page > 1 ? (
+          <a class="page-btn" href={page === 2 ? '/' : `/page/${page - 1}`} aria-label="上一页">‹</a>
+        ) : (
+          <span class="page-btn disabled">‹</span>
+        )}
+
+        {page > 2 && <a class="page-btn" href="/">1</a>}
+        {page > 3 && <span class="page-btn ellipsis">…</span>}
+        {page > 1 && <a class="page-btn" href={page === 2 ? '/' : `/page/${page - 1}`}>{page - 1}</a>}
+        <span class="page-btn active">{page}</span>
+        {page < totalPages && <a class="page-btn" href={`/page/${page + 1}`}>{page + 1}</a>}
+        {page < totalPages - 2 && <span class="page-btn ellipsis">…</span>}
+        {page < totalPages - 1 && <a class="page-btn" href={`/page/${totalPages}`}>{totalPages}</a>}
+
+        {page < totalPages ? (
+          <a class="page-btn" href={`/page/${page + 1}`} aria-label="下一页">›</a>
+        ) : (
+          <span class="page-btn disabled">›</span>
+        )}
+      </nav>
+    </main>
+
+    <aside class="sidebar">
+      <ProfileWidget postCount={postCount} categoryCount={categories.length} tagCount={tags.length} />
+      <CategoryWidget categories={categories} />
+      <TagCloudWidget tags={tags} />
+      <SiteInfoWidget postCount={postCount} tagCount={tags.length} wordCount={formatChars(totalChars)} lastPostDate={lastPostDate} />
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .main-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px var(--space-page) 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--gap-section);
+    align-items: start;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .section-header-line { width: 4px; height: 20px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  .section-header-text { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
+  .page-indicator { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+  .post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+  .post-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  main { min-width: 0; }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .page-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-meta);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .page-btn:hover, .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-btn.disabled { opacity: .4; pointer-events: none; }
+  .page-btn.ellipsis { border: none; background: none; pointer-events: none; }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: calc(var(--nav-height) + 20px);
+    min-width: 0;
+  }
+
+  /* ── Tailwind lg breakpoint (1024px): stack sidebar ── */
+  @media (max-width: 1024px) {
+    .main-wrap {
+      grid-template-columns: 1fr;
+      padding: 24px 20px 48px;
+    }
+    .sidebar {
+      position: static;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  }
+
+  /* ── Tailwind sm breakpoint (640px): tighter padding ── */
+  @media (max-width: 640px) {
+    .main-wrap { padding: 20px 16px 40px; }
+    .sidebar { grid-template-columns: 1fr; }
+  }
+
+  /* Small phones (480px) */
+  @media (max-width: 480px) {
+    .main-wrap { padding: 16px 16px 36px; }
+    .section-header-text { font-size: 16px; }
+    .post-grid, .post-list { gap: 16px; }
+  }
+</style>

@@ -1,0 +1,112 @@
+---
+import { getCollection } from 'astro:content';
+import { SITE } from '../../config';
+import { displayTag } from '../../utils/tag';
+import { normalizeTags } from '../../utils/posts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const allPosts = (await getCollection('posts'))
+  .filter(p => !p.data.draft && p.data.published !== false);
+
+const tagMap = new Map<string, number>();
+for (const post of allPosts) {
+  for (const t of normalizeTags(post.data.tags)) {
+    tagMap.set(t, (tagMap.get(t) ?? 0) + 1);
+  }
+}
+const tags = [...tagMap.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, count]) => ({ name, count }));
+
+const maxCount = Math.max(...tags.map(t => t.count), 1);
+function fontSize(count: number) {
+  const ratio = count / maxCount;
+  if (ratio > 0.66) return '18px';
+  if (ratio > 0.33) return '14px';
+  return '12px';
+}
+---
+
+<BaseLayout title="标签" description={`${SITE.title} 全部文章标签，共 ${tags.length} 个标签。`}>
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1 class="page-title">标签</h1>
+      <p class="page-sub">共 <strong>{tags.length}</strong> 个标签</p>
+    </div>
+
+    <div class="tag-cloud">
+      {tags.map(tag => (
+        <a
+          class="tag-item"
+          href={`/tags/${encodeURIComponent(tag.name)}`}
+          style={`font-size:${fontSize(tag.count)}`}
+          title={`${displayTag(tag.name)} · ${tag.count} 篇`}
+        >
+          {displayTag(tag.name)}
+          <sup class="tag-count">{tag.count}</sup>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .page-header {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .page-sub { font-size: 15px; color: var(--text-meta); }
+  .page-sub strong { color: var(--accent); }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: baseline;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 28px 32px;
+    box-shadow: var(--shadow-card);
+  }
+  .tag-item {
+    color: var(--text-meta);
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-weight: 500;
+    transition: all .2s;
+    line-height: 1.6;
+  }
+  .tag-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .tag-count {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 2px;
+    font-weight: 400;
+  }
+
+  @media (max-width: 640px) {
+    .page-wrap { padding: 32px 16px 60px; }
+    .tag-cloud { padding: 20px; gap: 10px; }
+  }
+</style>
