@@ -451,7 +451,7 @@ node scripts/obsidian-publish.mjs "/path/to/article.md"
 2. 进入 **Settings → Pages → Source** 选择 **GitHub Actions**
 3. 推送到 `main` 分支 — 自动部署
 
-你的站点地址：`https://inkwell.mini-max.top`
+你的站点地址：`https://inkwell.max-mini.top`
 
 ### Cloudflare Pages
 

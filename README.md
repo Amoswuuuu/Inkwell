@@ -451,7 +451,7 @@ The project includes a `deploy.yml` workflow that auto-builds and deploys on pus
 2. Go to **Settings → Pages → Source** and select **GitHub Actions**
 3. Push to `main` — auto-deploy
 
-Your site will be live at: `https://inkwell.mini-max.top`
+Your site will be live at: `https://inkwell.max-mini.top`
 
 ### Cloudflare Pages
 
