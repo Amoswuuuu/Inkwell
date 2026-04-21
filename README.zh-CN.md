@@ -6,15 +6,11 @@
 
 Inkwell 基于一个设计信念：博客应同时对人类读者和 AI Agent 友好。每一个设计决策服务于两个目标之一——**AI Native** 数据架构，或**优雅的阅读体验**。
 
-
 <p align="center">
   <img src="docs/screenshots/home_light.png" width="49%" alt="Inkwell 浅色主页" />
   <img src="docs/screenshots/home_dark.png" width="49%" alt="Inkwell 深色主页" />
 </p>
-<p align="center">
-  <img src="docs/screenshots/post_page.png" width="49%" alt="Inkwell 文章页" />
-  <img src="docs/screenshots/archives_page.png" width="49%" alt="Inkwell 归档页" />
-</p>
+
 
 ---
 
@@ -455,7 +451,7 @@ node scripts/obsidian-publish.mjs "/path/to/article.md"
 2. 进入 **Settings → Pages → Source** 选择 **GitHub Actions**
 3. 推送到 `main` 分支 — 自动部署
 
-你的站点地址：`https://yourusername.github.io/Inkwell/`
+你的站点地址：`https://inkwell.mini-max.top`
 
 ### Cloudflare Pages
 

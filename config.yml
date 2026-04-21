@@ -2,7 +2,7 @@ site:
   title: "Inkwell Theme"
   subtitle: 'A Refined Astro Blog Theme'
   description: A minimalist, content-focused blog theme built with Astro.
-  url: https://inkwell.example.com
+  url: https://inkwell.mini-max.top
   startDate: '2024-01-01'
   timezone: Asia/Shanghai
   heroImage: https://cdn.jsdelivr.net/gh/volantis-x/cdn-wallpaper-minimalist/2020/006.jpg

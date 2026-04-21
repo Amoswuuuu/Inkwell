@@ -11,10 +11,6 @@ Inkwell is built on a conviction: a blog should be equally comfortable in the ha
   <img src="docs/screenshots/home_light.png" width="49%" alt="Inkwell Light Homepage" />
   <img src="docs/screenshots/home_dark.png" width="49%" alt="Inkwell Dark Homepage" />
 </p>
-<p align="center">
-  <img src="docs/screenshots/post_page.png" width="49%" alt="Inkwell Post Page" />
-  <img src="docs/screenshots/archives_page.png" width="49%" alt="Inkwell Archives Page" />
-</p>
 
 ---
 
@@ -455,7 +451,7 @@ The project includes a `deploy.yml` workflow that auto-builds and deploys on pus
 2. Go to **Settings → Pages → Source** and select **GitHub Actions**
 3. Push to `main` — auto-deploy
 
-Your site will be live at: `https://yourusername.github.io/Inkwell/`
+Your site will be live at: `https://inkwell.mini-max.top`
 
 ### Cloudflare Pages
 
