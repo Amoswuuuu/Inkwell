@@ -1,0 +1,12 @@
+# Public machine-readable endpoints are available to all crawlers.
+# Keep other API routes and implementation assets out of crawl indexes.
+# This is a crawl policy, not access control; private routes need authentication.
+User-agent: *
+Allow: /
+Disallow: /api/
+Allow: /api/posts.json
+Allow: /api/posts/
+Allow: /api/search.json
+Allow: /api/status.json
+Disallow: /_next/
+Disallow: /static/
